@@ -1,0 +1,405 @@
+/* CRITICAL FOUNDATION FIXES */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --dark: #0d0506;
+    --light: #f5f1e8;
+    --secondary: #d4af37;
+    --error: #ef4444;
+    --success: #4ade80;
+}
+
+/* Admin Layout - FIXED GRID CONFLICT */
+.admin-container {
+    display: flex;
+    min-height: calc(100vh - 80px);
+    width: 100%;
+    position: relative;
+    padding-top: 80px; /* Accommodate fixed header */
+}
+
+/* Sidebar - FIXED POSITIONING & MOBILE BEHAVIOR */
+.admin-sidebar {
+    background: rgba(13, 5, 6, 0.92);
+    border-right: 1px solid rgba(212, 175, 55, 0.25);
+    padding: 1.8rem 0;
+    position: fixed;
+    top: 80px;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 1000;
+    overflow-y: auto;
+    transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1), width 0.3s ease;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.35);
+}
+
+/* Main Content - FIXED MARGIN CONFLICT */
+.admin-main {
+    flex: 1;
+    padding: 2.5rem;
+    overflow-y: auto;
+    margin-left: 280px;
+    transition: margin-left 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* MOBILE MENU SYSTEM - CRITICAL FIXES */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 92px; /* Below 80px header + safe spacing */
+    left: 15px;
+    z-index: 1002;
+    background: var(--secondary);
+    color: var(--dark);
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.4rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+    transition: all 0.25s ease;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-menu-toggle:hover {
+    background: #b8972b;
+    transform: scale(1.05);
+}
+
+.mobile-menu-toggle:focus {
+    outline: 2px solid var(--secondary);
+    outline-offset: 2px;
+}
+
+/* Sidebar overlay for mobile (prevents interaction with main content) */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 80px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* RESPONSIVE BREAKPOINTS - LOGICAL CASCADE */
+@media (max-width: 1024px) {
+    .admin-sidebar {
+        width: 260px;
+        transform: translateX(-100%);
+        box-shadow: 3px 0 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    .admin-sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .admin-main {
+        margin-left: 0;
+        padding: 1.8rem;
+    }
+    
+    .mobile-menu-toggle {
+        display: flex;
+    }
+    
+    /* Prevent body scroll when sidebar open */
+    body.sidebar-open {
+        overflow: hidden;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .add-button {
+        align-self: stretch;
+        width: 100%;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 1.3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-sidebar {
+        width: 240px;
+        padding: 1.5rem 0;
+    }
+    
+    .menu-item {
+        padding: 0.9rem 1.7rem;
+        font-size: 0.98rem;
+        gap: 0.9rem;
+    }
+    
+    .menu-item span {
+        font-size: 1.2rem;
+    }
+    
+    .admin-main {
+        padding: 1.4rem;
+    }
+    
+    .admin-title {
+        font-size: 1.95rem;
+        margin-bottom: 1.3rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        padding: 1.4rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.9rem;
+    }
+    
+    .stat-icon { font-size: 2.3rem; }
+    .stat-value { font-size: 1.9rem; }
+    .stat-label { font-size: 0.92rem; }
+    
+    .form-card {
+        padding: 1.4rem;
+    }
+    
+    .form-card h2 {
+        font-size: 1.55rem;
+        margin-bottom: 1.2rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .cancel-button,
+    .add-button {
+        width: 100%;
+        padding: 0.95rem;
+    }
+    
+    .table-container {
+        font-size: 0.92rem;
+    }
+    
+    .film-cover-thumb {
+        width: 42px;
+        height: 58px;
+    }
+    
+    .action-buttons {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-sidebar {
+        width: 220px;
+        padding: 1.3rem 0;
+    }
+    
+    .menu-item {
+        padding: 0.85rem 1.5rem;
+        font-size: 0.95rem;
+        gap: 0.8rem;
+    }
+    
+    .menu-item span {
+        font-size: 1.15rem;
+    }
+    
+    .mobile-menu-toggle {
+        top: 88px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.3rem;
+    }
+    
+    .admin-main {
+        padding: 1.1rem;
+    }
+    
+    .admin-title {
+        font-size: 1.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .section-header {
+        padding: 0 0.3rem;
+    }
+    
+    .add-button {
+        padding: 0.8rem;
+        font-size: 0.92rem;
+    }
+    
+    .stat-card {
+        padding: 1.15rem;
+    }
+    
+    .stat-icon { font-size: 2.1rem; }
+    .stat-value { font-size: 1.75rem; }
+    .stat-label { font-size: 0.88rem; }
+    
+    .form-card {
+        padding: 1.1rem;
+    }
+    
+    .form-card h2 {
+        font-size: 1.35rem;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 0.85rem;
+        font-size: 0.93rem;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 0.65rem 0.45rem;
+        font-size: 0.88rem;
+    }
+    
+    .admin-table th {
+        white-space: normal;
+        word-wrap: break-word;
+    }
+    
+    .admin-table td {
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.4;
+    }
+    
+    .action-btn {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.78rem;
+        min-width: 65px;
+    }
+    
+    .film-cover-thumb {
+        width: 36px;
+        height: 50px;
+    }
+}
+
+/* TABLET LANDSCAPE OPTIMIZATIONS */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .form-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .admin-main {
+        padding: 1.9rem;
+    }
+}
+
+/* FORM ELEMENTS - CRITICAL ADDITIONS */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.6rem;
+    color: var(--light);
+    font-weight: 500;
+    font-size: 0.98rem;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 1rem;
+    background: rgba(26, 10, 15, 0.65);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    color: var(--light);
+    font-size: 1rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--secondary);
+    background: rgba(26, 10, 15, 0.85);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* ACCESSIBILITY & UX ENHANCEMENTS */
+.menu-item:focus,
+.action-btn:focus,
+.add-button:focus,
+.cancel-button:focus {
+    outline: 2px solid var(--secondary);
+    outline-offset: 2px;
+}
+
+/* LOADING/EMPTY STATES - VISUAL POLISH */
+.loading, .empty-state {
+    background: rgba(26, 10, 15, 0.4);
+    border-radius: 10px;
+    margin: 1.5rem 0;
+}
+
+.empty-state-icon {
+    color: var(--secondary);
+    opacity: 0.7;
+}
+
+/* ANIMATIONS - SMOOTH TRANSITIONS */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+}

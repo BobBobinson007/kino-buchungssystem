@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <link rel="icon" type="image/jpeg" href="/data/admin.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Adminbereich für die Verwaltung des CJ Home Cinema Programms und der Buchungen.">
+    <link rel="canonical" href="/admin.html">
+    <title>Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="grain-overlay"></div>
+    
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">◆</span>
+                <span class="logo-text">CineVerse Admin</span>
+            </div>
+            <div class="nav-links">
+                <span id="adminUsername" style="color: var(--secondary);"></span>
+                <a href="/" class="nav-link">Zur Website</a>
+                <a href="#" class="nav-link" id="adminLogoutBtn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Dashboard -->
+            <section id="dashboard" class="admin-section active">
+                <h1 class="admin-title">Dashboard</h1>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎬</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statFilme">0</div>
+                            <div class="stat-label">Aktive Filme</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎫</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statBuchungen">0</div>
+                            <div class="stat-label">Gesamte Buchungen</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statUsers">0</div>
+                            <div class="stat-label">Registrierte User</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statSpenden">0€</div>
+                            <div class="stat-label">Spenden gesamt</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Code Verifikation -->
+            <section id="code-verifikation" class="admin-section">
+                <h1 class="admin-title">Buchungscode Verifikation</h1>
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <div style="background: rgba(26, 10, 15, 0.5); border: 1px solid rgba(212, 175, 55, 0.2); padding: 2rem; margin-bottom: 2rem;">
+                        <h3 style="color: var(--secondary); margin-bottom: 1rem;">8-stelligen Buchungscode eingeben</h3>
+                        <p style="margin-bottom: 2rem; color: rgba(245, 241, 232, 0.8);">
+                            Geben Sie den 8-stelligen Buchungscode des Kunden ein, um die Buchung zu verifizieren und Einlass zu gewähren.
+                        </p>
+                        
+                        <form id="codeVerifikationForm">
+                            <div class="form-group">
+                                <label for="bookingCodeInput" style="color: var(--secondary); font-weight: 600; display: block; margin-bottom: 0.5rem;">
+                                    Buchungscode (8 Zeichen)
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="bookingCodeInput" 
+                                    placeholder="z.B. ABC2X7Y9" 
+                                    maxlength="8"
+                                    style="font-family: 'Courier New', monospace; font-size: 1.5rem; letter-spacing: 0.3rem; text-transform: uppercase; text-align: center; padding: 1rem;"
+                                    autocomplete="off"
+                                    required>
+                            </div>
+                            <button type="submit" class="submit-button" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                                🔍 Code verifizieren
+                            </button>
+                        </form>
+                        
+                        <div id="verificationResult" style="margin-top: 2rem;">
+                            <!-- Verifikationsergebnis wird hier angezeigt -->
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(26, 10, 15, 0.3); border: 1px solid rgba(212, 175, 55, 0.1); padding: 1.5rem; border-radius: 8px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 1rem;">ℹ️ Hinweise:</h4>
+                        <ul style="color: rgba(245, 241, 232, 0.7); line-height: 2;">
+                            <li>Der Buchungscode besteht aus 8 Zeichen (Buchstaben und Zahlen)</li>
+                            <li>Kunden erhalten den Code per E-Mail nach der Buchung</li>
+                            <li>Jeder Code kann nur einmal verwendet werden</li>
+                            <li>Nach erfolgreicher Verifikation wird der Einlass gewährt</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filme verwalten -->
+            <section id="filme" class="admin-section">
+                <div class="section-header">
+                    <h1 class="admin-title">Filme verwalten</h1>
+                    <button class="add-button" id="showFilmFormBtn">+ Neuer Film</button>
+                </div>
+
+                <div id="filmForm" class="form-card" style="display: none;">
+                    <h2>Film hinzufügen/bearbeiten</h2>
+                    <form id="filmFormElement">
+                        <input type="hidden" id="filmId">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="filmTitel">Titel *</label>
+                                <input type="text" id="filmTitel" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="filmGenre">Genre *</label>
+                                <select id="filmGenre" required>
+                                    <option value="">Bitte wählen</option>
+                                    <option value="Action">Action</option>
+                                    <option value="Komödie">Komödie</option>
+                                    <option value="Drama">Drama</option>
+                                    <option value="Thriller">Thriller</option>
+                                    <option value="Sci-Fi">Sci-Fi</option>
+                                    <option value="Horror">Horror</option>
+                                    <option value="Romantik">Romantik</option>
+                                    <option value="Dokumentation">Dokumentation</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="filmBeschreibung">Beschreibung</label>
+                            <textarea id="filmBeschreibung" rows="3"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="filmDauer">Dauer (Min) *</label>
+                                <input type="number" id="filmDauer" required min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="filmPreis">Preis (€) *</label>
+                                <input type="number" id="filmPreis" step="0.01" required min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="filmWoche">Woche *</label>
+                                <select id="filmWoche" required>
+                                    <option value="1">Woche 1 (Neu)</option>
+                                    <option value="2">Woche 2</option>
+                                    <option value="3">Woche 3+</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="filmCover">Cover URL (Unsplash empfohlen)</label>
+                            <input type="url" id="filmCover" placeholder="https://images.unsplash.com/...">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">Speichern</button>
+                            <button type="button" class="cancel-button" id="hideFilmFormBtn">Abbrechen</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Cover</th>
+                                <th>Titel</th>
+                                <th>Genre</th>
+                                <th>Dauer</th>
+                                <th>Preis</th>
+                                <th>Woche</th>
+                                <th>Status</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filmeTable">
+                            <!-- Dynamisch geladen -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Vorstellungen -->
+            <section id="vorstellungen" class="admin-section">
+                <div class="section-header">
+                    <h1 class="admin-title">Vorstellungen verwalten</h1>
+                    <button class="add-button" id="showVorstellungFormBtn">+ Neue Vorstellung</button>
+                </div>
+
+                <div id="vorstellungForm" class="form-card" style="display: none;">
+                    <h2>Vorstellung hinzufügen</h2>
+                    <form id="vorstellungFormElement">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="vorstellungFilm">Film *</label>
+                                <select id="vorstellungFilm" required>
+                                    <option value="">Bitte wählen</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="vorstellungDatum">Datum *</label>
+                                <input type="date" id="vorstellungDatum" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="vorstellungZeit">Zeit *</label>
+                                <input type="time" id="vorstellungZeit" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="vorstellungPreis">Preis (€) *</label>
+                                <input type="number" id="vorstellungPreis" step="0.01" required min="0">
+                            </div>
+                        </div>
+                        <p style="color: rgba(245, 241, 232, 0.6); font-size: 0.9rem; margin-top: 0.5rem;">
+                            ℹ️ Alle Vorstellungen haben 8 Sitzplätze (Standard)
+                        </p>
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">Speichern</button>
+                            <button type="button" class="cancel-button" id="hideVorstellungFormBtn">Abbrechen</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Film</th>
+                                <th>Datum</th>
+                                <th>Zeit</th>
+                                <th>Gebucht/Gesamt</th>
+                                <th>Preis</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vorstellungenTable">
+                            <!-- Dynamisch geladen -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+    <script src="admin.js"></script>
+</body>
+</html>

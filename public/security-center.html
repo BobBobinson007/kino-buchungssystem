@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security Control Center</title>
+  <link rel="stylesheet" href="/security-center.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SC</div>
+        <div>
+          <div class="brand-title">Security Center</div>
+          <div class="brand-sub">Developer Console</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Status</div>
+        <div id="status" class="status">Status: Unbekannt</div>
+      </div>
+
+      <div id="login" class="login">
+        <label>
+          Benutzername
+          <input id="username" type="text" autocomplete="username" />
+        </label>
+        <label>
+          Passwort
+          <input id="password" type="password" autocomplete="current-password" />
+        </label>
+        <label>
+          2FA Code
+          <input id="token" type="text" inputmode="numeric" autocomplete="one-time-code" />
+        </label>
+        <div class="actions">
+          <button id="loginBtn">Login</button>
+        </div>
+        <div id="message" class="message"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Session</div>
+        <div class="kv">
+          <div>2FA</div>
+          <div id="mfaState">-</div>
+        </div>
+        <div class="kv">
+          <div>Session</div>
+          <div id="sessionState">-</div>
+        </div>
+        <button id="logoutBtn" class="ghost full">Logout</button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Export</div>
+        <button id="printBtn" class="ghost full">PDF Export</button>
+        <button id="exportBtn" class="ghost full">CSV Export</button>
+      </div>
+    </aside>
+
+    <main class="content" id="center">
+      <header class="topbar">
+        <div>
+          <div class="title">Security Control Center</div>
+          <div class="subtitle">Live Monitoring, Analysen und Schutzschalter</div>
+        </div>
+        <div class="filters">
+          <label>
+            Historie
+            <select id="rangeSelect">
+              <option value="1">24h</option>
+              <option value="7" selected>7 Tage</option>
+              <option value="30">30 Tage</option>
+            </select>
+          </label>
+          <label>
+            Log-Level
+            <select id="levelSelect">
+              <option value="all" selected>Alle</option>
+              <option value="error">Error</option>
+              <option value="warn">Warn</option>
+              <option value="info">Info</option>
+            </select>
+          </label>
+          <label>
+            Modus
+            <select id="viewSelect">
+              <option value="clean" selected>Uebersicht</option>
+              <option value="raw">Raw Logs</option>
+            </select>
+          </label>
+          <div class="last-update">Letztes Update: <span id="lastUpdate">-</span></div>
+        </div>
+      </header>
+
+      <section class="status-strip">
+        <div class="strip-card">
+          <div class="strip-label">Threat Level</div>
+          <div id="threatLevel" class="strip-value">Unbekannt</div>
+          <div id="threatHint" class="strip-hint">Wird aus Logs berechnet</div>
+        </div>
+        <div class="strip-card">
+          <div class="strip-label">Security Score</div>
+          <div class="strip-value"><span id="postureScore">-</span>/100</div>
+          <div class="strip-hint">Posture Index</div>
+        </div>
+        <div class="strip-card">
+          <div class="strip-label">Aktive Sessions</div>
+          <div id="activeSessions" class="strip-value">-</div>
+          <div class="strip-hint">Live Traffic</div>
+        </div>
+        <div class="strip-card">
+          <div class="strip-label">SLA Uptime</div>
+          <div id="uptimeSla" class="strip-value">99.98%</div>
+          <div class="strip-hint">Letzte 30 Tage</div>
+        </div>
+      </section>
+
+      <section class="cards">
+        <div class="card">
+          <div class="card-title">Events gesamt</div>
+          <div id="totalCount" class="card-value">-</div>
+        </div>
+        <div class="card warn">
+          <div class="card-title">Warnungen</div>
+          <div id="warnCount" class="card-value">-</div>
+        </div>
+        <div class="card error">
+          <div class="card-title">Fehler</div>
+          <div id="errorCount" class="card-value">-</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Letzter Fehler</div>
+          <div id="lastError" class="card-value small">-</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Failed Logins</div>
+          <div id="failedLogins" class="card-value">-</div>
+        </div>
+        <div class="card warn">
+          <div class="card-title">2FA Fehler</div>
+          <div id="otpFailures" class="card-value">-</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Admin Aktionen</div>
+          <div id="adminActions" class="card-value">-</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Auto Refresh</div>
+          <div id="refreshState" class="card-value small">30s</div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Diagramme</div>
+            <div class="panel-meta">Stacked Events pro Tag</div>
+          </div>
+          <div class="chart-legend">
+            <span class="legend-item info">Info</span>
+            <span class="legend-item warn">Warn</span>
+            <span class="legend-item error">Error</span>
+          </div>
+          <div id="chart" class="chart"></div>
+          <div id="chartEmpty" class="empty">Noch keine Daten vorhanden.</div>
+          <div class="chart-footer">
+            <div class="metric">
+              Peak Day
+              <strong id="chartPeak">-</strong>
+            </div>
+            <div class="metric">
+              Ø Events/Tag
+              <strong id="chartAvg">-</strong>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Warnungen & Fehler</div>
+          <ul id="warnings" class="list"></ul>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-title">Security Posture</div>
+          <div class="progress-block">
+            <div class="progress-header">
+              <span>Abwehrgrad</span>
+              <span id="postureLabel" class="pill ok">Stabil</span>
+            </div>
+            <div class="progress-bar">
+              <div id="postureBar" class="progress-fill" style="width: 65%;"></div>
+            </div>
+            <div class="progress-meta">
+              <div>Policy Coverage <strong id="policyCoverage">-</strong></div>
+              <div>Misconfig Alerts <strong id="misconfigCount">-</strong></div>
+              <div>Endpoint Drift <strong id="endpointDrift">-</strong></div>
+            </div>
+          </div>
+          <div class="stack-list">
+            <div class="stack-item">
+              <span>Credential Hygiene</span>
+              <span id="credHygiene" class="pill warn">Review</span>
+            </div>
+            <div class="stack-item">
+              <span>Geo-Policy</span>
+              <span id="geoPolicy" class="pill ok">Aktiv</span>
+            </div>
+            <div class="stack-item">
+              <span>Bot Shield</span>
+              <span id="botShield" class="pill ok">Aktiv</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Site Activity Signals</div>
+          <div class="signal-grid">
+            <div class="signal">
+              <div class="signal-title">Nutzer eingeloggt</div>
+              <div id="signalLogin" class="signal-status ok">unbekannt</div>
+            </div>
+            <div class="signal">
+              <div class="signal-title">Website aufgerufen</div>
+              <div id="signalPage" class="signal-status ok">unbekannt</div>
+            </div>
+            <div class="signal">
+              <div class="signal-title">Checkout gestartet</div>
+              <div id="signalCheckout" class="signal-status warn">unbekannt</div>
+            </div>
+            <div class="signal">
+              <div class="signal-title">Admin Panel geöffnet</div>
+              <div id="signalAdmin" class="signal-status ok">unbekannt</div>
+            </div>
+            <div class="signal">
+              <div class="signal-title">PDF Export</div>
+              <div id="signalPdf" class="signal-status ok">unbekannt</div>
+            </div>
+            <div class="signal">
+              <div class="signal-title">API Integrationen</div>
+              <div id="signalApi" class="signal-status ok">unbekannt</div>
+            </div>
+          </div>
+          <div class="signal-note">
+            Erkennungen basieren auf den letzten Events und dem Log-Level-Filter.
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-title">Top Events</div>
+          <ul id="topMessages" class="list"></ul>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Top IPs</div>
+          <ul id="topIps" class="list"></ul>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-title">Behavioral Analytics</div>
+          <div class="panel-split">
+            <div>
+              <div class="meta-title">Anomalien</div>
+              <div class="meta-row">
+                <span>Session Drift</span>
+                <strong id="sessionDrift">-</strong>
+              </div>
+              <div class="meta-row">
+                <span>Geo Wechsel</span>
+                <strong id="geoShift">-</strong>
+              </div>
+              <div class="meta-row">
+                <span>Device Wechsel</span>
+                <strong id="deviceShift">-</strong>
+              </div>
+            </div>
+            <div>
+              <div class="meta-title">Rate Limiting</div>
+              <div class="chip-row">
+                <span class="chip ok">Login: OK</span>
+                <span class="chip ok">API: OK</span>
+                <span class="chip warn">Checkout: Beobachten</span>
+              </div>
+              <div class="meta-title">Fraud Signals</div>
+              <div class="chip-row">
+                <span class="chip ok">Proxy</span>
+                <span class="chip warn">Velocity</span>
+                <span class="chip ok">Device Trust</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Compliance & Policies</div>
+          <div class="checklist">
+            <div class="check-item">
+              <span class="dot ok"></span>
+              <div>
+                <div class="check-title">DSGVO Logging</div>
+                <div class="check-sub">Retention 90 Tage</div>
+              </div>
+            </div>
+            <div class="check-item">
+              <span class="dot ok"></span>
+              <div>
+                <div class="check-title">2FA Pflicht</div>
+                <div class="check-sub">Admin & Entwickler</div>
+              </div>
+            </div>
+            <div class="check-item">
+              <span class="dot warn"></span>
+              <div>
+                <div class="check-title">Least Privilege</div>
+                <div class="check-sub">2 Rollen offen</div>
+              </div>
+            </div>
+            <div class="check-item">
+              <span class="dot ok"></span>
+              <div>
+                <div class="check-title">Audit Trail</div>
+                <div class="check-sub">Immutable</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-title">Data Protection</div>
+          <div class="data-grid">
+            <div class="data-card">
+              <div class="data-title">DLP Regeln</div>
+              <div class="data-value" id="dlpRules">18</div>
+              <div class="data-sub">PII & Payment Masking</div>
+            </div>
+            <div class="data-card">
+              <div class="data-title">Key Rotation</div>
+              <div class="data-value" id="keyRotation">14d</div>
+              <div class="data-sub">Naechster Lauf</div>
+            </div>
+            <div class="data-card">
+              <div class="data-title">Secrets Vault</div>
+              <div class="data-value" id="vaultHealth">OK</div>
+              <div class="data-sub">Latency 32ms</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Backup & Recovery</div>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-title">Letztes Backup</div>
+              <div id="lastBackup" class="timeline-value">-</div>
+              <div class="timeline-sub">Inkrementell</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-title">Restore Test</div>
+              <div id="restoreTest" class="timeline-value">-</div>
+              <div class="timeline-sub">Staging</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-title">DB Integrity</div>
+              <div id="dbIntegrity" class="timeline-value">OK</div>
+              <div class="timeline-sub">No drift detected</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-title">API & Integrationen</div>
+          <div class="service-list">
+            <div class="service">
+              <div>
+                <div class="service-title">Payment Provider</div>
+                <div id="servicePaymentLatency" class="service-sub">Latency 120ms</div>
+              </div>
+              <span id="servicePaymentStatus" class="pill ok">Operational</span>
+            </div>
+            <div class="service">
+              <div>
+                <div class="service-title">Email Gateway</div>
+                <div id="serviceEmailQueue" class="service-sub">Queue 0</div>
+              </div>
+              <span id="serviceEmailStatus" class="pill ok">Operational</span>
+            </div>
+            <div class="service">
+              <div>
+                <div class="service-title">Fraud API</div>
+                <div id="serviceFraudLatency" class="service-sub">Status 200</div>
+              </div>
+              <span id="serviceFraudStatus" class="pill warn">Degraded</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Geo & Device Mix</div>
+          <div class="pill-row">
+            <span id="geoDE" class="pill neutral">DE 62%</span>
+            <span id="geoAT" class="pill neutral">AT 18%</span>
+            <span id="geoCH" class="pill neutral">CH 9%</span>
+            <span id="geoNL" class="pill neutral">NL 6%</span>
+            <span id="geoUS" class="pill neutral">US 5%</span>
+          </div>
+          <div class="device-grid">
+            <div class="device">
+              <div class="device-title">Desktop</div>
+              <div id="deviceDesktop" class="device-value">68%</div>
+            </div>
+            <div class="device">
+              <div class="device-title">Mobile</div>
+              <div id="deviceMobile" class="device-value">29%</div>
+            </div>
+            <div class="device">
+              <div class="device-title">Tablet</div>
+              <div id="deviceTablet" class="device-value">3%</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-title">Firewall</div>
+          <div class="controls">
+            <label class="toggle">
+              <input id="firewallToggle" type="checkbox" />
+              <span class="slider"></span>
+              <span>Firewall Modus</span>
+            </label>
+            <div id="firewallState" class="muted">Status: -</div>
+          </div>
+          <div class="rule-form">
+            <input id="ipInput" type="text" placeholder="IP Adresse" />
+            <select id="ruleType">
+              <option value="allow">Allow</option>
+              <option value="deny">Deny</option>
+            </select>
+            <button id="addRuleBtn">Regel hinzufuegen</button>
+          </div>
+          <div id="rules" class="rules"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Lockdown</div>
+          <div class="controls">
+            <label class="toggle">
+              <input id="lockdownToggle" type="checkbox" />
+              <span class="slider"></span>
+              <span>Lockdown Modus</span>
+            </label>
+            <div id="lockdownState" class="muted">Status: -</div>
+          </div>
+          <div class="note">
+            Aktiviert den globalen Lockdown. Alle oeffentlichen Seiten werden blockiert und auf die Lockdown-Seite umgeleitet.
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">Logs</div>
+        <div class="search">
+          <input id="searchInput" type="text" placeholder="Suche in Logs" />
+          <button id="searchBtn" class="ghost">Suche</button>
+          <button id="clearSearchBtn" class="ghost">Reset</button>
+        </div>
+        <div id="logs" class="logs"></div>
+        <div id="logsEmpty" class="empty">Noch keine Logs in diesem Zeitraum.</div>
+        <div class="pager">
+          <button id="prevBtn" class="ghost">Zurueck</button>
+          <button id="nextBtn" class="ghost">Weiter</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/security-center.js"></script>
+</body>
+</html>
