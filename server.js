@@ -426,6 +426,8 @@ app.post('/api/app-password', async (req, res) => {
 });
 
 // ============ APP PASSWORD PROTECTION ============
+const GOOGLE_VERIFICATION_FILE = '/googlee5c0a0d064e3bb72.html';
+const isVerificationFile = (path) => path === GOOGLE_VERIFICATION_FILE;
 const requireAppPassword = (req, res, next) => {
   const appPassword = process.env.APP_PASSWORD;
   
@@ -443,6 +445,7 @@ const requireAppPassword = (req, res, next) => {
     req.path.startsWith('/api/developer') ||
     req.path.startsWith('/api/security') ||
     req.path.startsWith('/lockdown') ||
+    isVerificationFile(req.path) ||
     req.path.endsWith('.css') ||
     req.path.endsWith('.js') ||
     req.path.endsWith('.png') ||
@@ -478,6 +481,7 @@ const lockdownGate = (req, res, next) => {
   ];
   if (devOk) return next();
   if (allowPaths.some(p => req.path.startsWith(p))) return next();
+  if (isVerificationFile(req.path)) return next();
   return res.redirect(302, '/lockdown');
 };
 
