@@ -427,7 +427,10 @@ app.post('/api/app-password', async (req, res) => {
 
 // ============ APP PASSWORD PROTECTION ============
 const GOOGLE_VERIFICATION_FILE = '/googlee5c0a0d064e3bb72.html';
+const LANDING_PAGE_PATH = '/cj';
+const LANDING_PAGE_FILE = '/cj.html';
 const isVerificationFile = (path) => path === GOOGLE_VERIFICATION_FILE;
+const PUBLIC_PAGES = ['/impressum', '/datenschutz', '/cookies', '/agb', '/impressum.html', '/datenschutz.html', '/cookies.html', '/agb.html'];
 const requireAppPassword = (req, res, next) => {
   const appPassword = process.env.APP_PASSWORD;
   
@@ -446,6 +449,9 @@ const requireAppPassword = (req, res, next) => {
     req.path.startsWith('/api/security') ||
     req.path.startsWith('/lockdown') ||
     isVerificationFile(req.path) ||
+    req.path === LANDING_PAGE_PATH ||
+    req.path === LANDING_PAGE_FILE ||
+    PUBLIC_PAGES.includes(req.path) ||
     req.path.endsWith('.css') ||
     req.path.endsWith('.js') ||
     req.path.endsWith('.png') ||
@@ -482,6 +488,8 @@ const lockdownGate = (req, res, next) => {
   if (devOk) return next();
   if (allowPaths.some(p => req.path.startsWith(p))) return next();
   if (isVerificationFile(req.path)) return next();
+  if (req.path === LANDING_PAGE_PATH || req.path === LANDING_PAGE_FILE) return next();
+  if (PUBLIC_PAGES.includes(req.path)) return next();
   return res.redirect(302, '/lockdown');
 };
 
@@ -531,6 +539,86 @@ app.use(express.static('public'));
 app.post('/api/app-password/logout', (req, res) => {
   req.session.appPasswordVerified = false;
   res.json({ success: true, message: 'Passwort zurückgesetzt' });
+});
+
+// Kontaktformular (öffentlich)
+app.post('/api/contact', (req, res) => {
+  const { name, email, message, turnstileToken } = req.body || {};
+  if (!name || !email || !message) {
+    return res.status(400).json({ error: 'Name, Email und Nachricht sind erforderlich' });
+  }
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    return res.status(500).json({ error: 'SMTP ist nicht konfiguriert' });
+  }
+  if (!process.env.CF_TURNSTILE_SECRET_KEY_CJ) {
+    return res.status(500).json({ error: 'Turnstile ist nicht konfiguriert' });
+  }
+  if (!turnstileToken) {
+    return res.status(400).json({ error: 'Turnstile Token fehlt' });
+  }
+
+  const https = require('https');
+  const postData = new URLSearchParams({
+    secret: process.env.CF_TURNSTILE_SECRET_KEY_CJ,
+    response: turnstileToken,
+    remoteip: req.ip
+  }).toString();
+
+  const verifyOptions = {
+    hostname: 'challenges.cloudflare.com',
+    port: 443,
+    path: '/turnstile/v0/siteverify',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  };
+
+  const verifyReq = https.request(verifyOptions, (verifyRes) => {
+    let data = '';
+    verifyRes.on('data', (chunk) => { data += chunk; });
+    verifyRes.on('end', () => {
+      let payload = null;
+      try { payload = JSON.parse(data); } catch (_) {}
+      if (!payload || payload.success !== true) {
+        return res.status(400).json({ error: 'Turnstile Verifikation fehlgeschlagen' });
+      }
+
+      const adminEmail = process.env.SMTP_USER;
+      const mailOptions = {
+        from: process.env.SMTP_USER,
+        to: adminEmail,
+        replyTo: email,
+        subject: 'Website Admin Kontakt aufnehmen',
+        html: `
+          <div style="font-family: sans-serif; padding: 16px;">
+            <h2>Neue Nachricht ueber die Website</h2>
+            <p><strong>Name:</strong> ${String(name)}</p>
+            <p><strong>Email:</strong> ${String(email)}</p>
+            <p><strong>Nachricht:</strong></p>
+            <p>${String(message).replace(/\\n/g, '<br>')}</p>
+          </div>
+        `
+      };
+
+      transporter.sendMail(mailOptions, (err) => {
+        if (err) {
+          console.error('Kontakt Email Fehler:', err);
+          return res.status(500).json({ error: 'Email konnte nicht gesendet werden' });
+        }
+        return res.json({ success: true });
+      });
+    });
+  });
+
+  verifyReq.on('error', (err) => {
+    console.error('Turnstile Verify Fehler:', err);
+    return res.status(500).json({ error: 'Turnstile Verifikation fehlgeschlagen' });
+  });
+
+  verifyReq.write(postData);
+  verifyReq.end();
 });
 
 const requireAuth = (req, res, next) => {
@@ -2137,6 +2225,10 @@ staticPages.forEach(page => {
   app.get(`/${page}`, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', `${page}.html`));
   });
+});
+
+app.get('/cj', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'cj.html'));
 });
 
 // 404 Handler

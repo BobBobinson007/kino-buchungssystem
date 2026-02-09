@@ -177,6 +177,7 @@ function checkCookieConsent() {
     const consent = localStorage.getItem('cookieConsent');
     if (!consent) {
         document.getElementById('cookieBanner').classList.add('show');
+        return;
     }
 }
 
