@@ -431,6 +431,7 @@ const LANDING_PAGE_PATH = '/cj';
 const LANDING_PAGE_FILE = '/cj.html';
 const isVerificationFile = (path) => path === GOOGLE_VERIFICATION_FILE;
 const PUBLIC_PAGES = ['/impressum', '/datenschutz', '/cookies', '/agb', '/impressum.html', '/datenschutz.html', '/cookies.html', '/agb.html'];
+const PUBLIC_FILES = ['/sitemap.xml', '/robots.txt'];
 const requireAppPassword = (req, res, next) => {
   const appPassword = process.env.APP_PASSWORD;
   
@@ -452,6 +453,7 @@ const requireAppPassword = (req, res, next) => {
     req.path === LANDING_PAGE_PATH ||
     req.path === LANDING_PAGE_FILE ||
     PUBLIC_PAGES.includes(req.path) ||
+    PUBLIC_FILES.includes(req.path) ||
     req.path.endsWith('.css') ||
     req.path.endsWith('.js') ||
     req.path.endsWith('.png') ||
@@ -490,6 +492,7 @@ const lockdownGate = (req, res, next) => {
   if (isVerificationFile(req.path)) return next();
   if (req.path === LANDING_PAGE_PATH || req.path === LANDING_PAGE_FILE) return next();
   if (PUBLIC_PAGES.includes(req.path)) return next();
+  if (PUBLIC_FILES.includes(req.path)) return next();
   return res.redirect(302, '/lockdown');
 };
 
